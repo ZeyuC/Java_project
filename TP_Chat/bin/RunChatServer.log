@@ -1,0 +1,12 @@
+May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+信息: log file created
+May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:39:09 PM RunChatServer launch
+信息: Creating server on port 1394 with timeout 5000 ms and verbose off
+May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:39:09 PM chat.server.ChatServer <init>
+信息: ChatServer::ChatServer(port = 1394, timeout = 5000, quit = true)
+May 04, 2018 3:39:09 PM RunChatServer launch
+信息: Waiting for server to terminate ... 

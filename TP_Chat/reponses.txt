@@ -1,0 +1,29 @@
+Réponses aux question de la partie UML : 
+
+- A quoi sert la classe AbstractRunChat ?
+Il offre aussi les fonction
+
+- Expliquez la relation ChatServer / InputOutputClient concrétisée par l’attribut « clients ».
+
+
+- Expliquez la relation ClientHandler / InputClient concrétisée par l’attribut « mainClient ».
+
+
+- Expliquez la relation ClientHandler / InputOutputClient concrétisée par l’attribut « allClients ».
+
+
+- Combien de threads tournent sur un serveur dans le scénario présenté par la Figure 1 (page 1) ? 
+  Détaillez votre réponse en précisant qui lance qui.
+
+
+- Combien de threads tournent dans le Client 1 du scénario présenté par la Figure 1 (page 1) ?
+  Détaillez votre réponse en précisant qui lance qui.
+Il y a trois threads tournent dans le Client 1. Un pour userHandler, un pour serverHandler ,un pour « main Handler »
+, unserHandler et serverHandler sont lancé par ChatClient, mainHandler est lancé par RunChatClient;
+
+- A quoi sert le threads[i].join() à la fin du run de ChatClient ?
+Comme threads[0] représente la userhandler,threads[1] représente la ServerHandler, donc , threads[i].join() permet de s’assurer que les threads de UserHandler et ServerHandler se sont bien terminés.
+
+
+- Que représente la classe ChatClient dans le cadre d’une architecture MVC ?
+Il représente C (contrôleur) parce qu’un contrôleur traite les actions effectuées par l'utilisateur.

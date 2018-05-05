@@ -1,0 +1,34 @@
+May 04, 2018 3:38:06 PM logger.LoggerFactory getLogger
+信息: log file created
+May 04, 2018 3:38:06 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:38:06 PM RunChatServer setAttributes
+信息: Setting quit on last client to false
+May 04, 2018 3:38:06 PM RunChatServer launch
+信息: Creating server on port 1394 with timeout 5000 ms and verbose off
+May 04, 2018 3:38:06 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:38:06 PM chat.server.ChatServer <init>
+信息: ChatServer::ChatServer(port = 1394, timeout = 5000, quit = false)
+May 04, 2018 3:38:06 PM RunChatServer launch
+信息: Waiting for server to terminate ... 
+May 04, 2018 3:38:12 PM chat.server.ChatServer run
+信息: ChatServer: Creatingc client input stream to get client's name ... 
+May 04, 2018 3:38:12 PM chat.server.ChatServer run
+信息: ChatServer: reading client's name: 
+May 04, 2018 3:38:12 PM chat.server.ChatServer run
+信息: ChatServer: client name Zébulon
+May 04, 2018 3:38:12 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:38:12 PM chat.server.InputClient <init>
+信息: InputClient: Creating Input Stream ... 
+May 04, 2018 3:38:12 PM chat.server.InputOutputClient <init>
+信息: Client: Creating Output Stream ... 
+May 04, 2018 3:38:12 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 04, 2018 3:38:25 PM chat.server.InputOutputClient cleanup
+信息: Client::cleanup: closing output stream ... 
+May 04, 2018 3:38:25 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing input stream ... 
+May 04, 2018 3:38:25 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing client socket ... 
