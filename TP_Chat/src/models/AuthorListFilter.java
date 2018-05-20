@@ -54,13 +54,16 @@ public class AuthorListFilter implements Predicate<Message>//, ListDataListener
 		this();
 		int minSelectionIndex = 0;
 		int maxSelectionIndex = 0;
-
+		
 		/*
 		 * TODO
 		 * 	- Add All selected elements of listModel (from selectionModel)
 		 * 	into authors
 		 */
-
+		minSelectionIndex = selectionModel.getMinSelectionIndex();
+		maxSelectionIndex = selectionModel.getMaxSelectionIndex();
+		for(int i = minSelectionIndex;i < maxSelectionIndex;i++)
+			authors.add(listModel.getElementAt(i));
 	}
 
 	/**
@@ -75,8 +78,7 @@ public class AuthorListFilter implements Predicate<Message>//, ListDataListener
 		 * TODO Add author to authors if it is not already in and
 		 * return true
 		 */
-
-		return false;
+		return (authors.add(author));
 	}
 
 	/**
@@ -89,6 +91,11 @@ public class AuthorListFilter implements Predicate<Message>//, ListDataListener
 		/*
 		 * TODO remove author from authors if it was there and return true
 		 */
+		if(authors.contains(author))
+		{
+		authors.remove(author);
+		return true;
+		}
 		return false;
 	}
 
@@ -100,8 +107,11 @@ public class AuthorListFilter implements Predicate<Message>//, ListDataListener
 		/*
 		 * TODO clear authors if it's not empty the return true
 		 */
-
-		return false;
+		if(authors.isEmpty())
+			return false;
+		
+        authors.clear();
+        return true;
 	}
 
 	/**
@@ -138,6 +148,14 @@ public class AuthorListFilter implements Predicate<Message>//, ListDataListener
 		 * if so return true
 		 * Otherwise return false
 		 */
+		if(!authors.isEmpty()&&isFiltering())
+		{
+			if(authors.contains(m.getAuthor()))
+				return true;
+			else {
+				return false;
+			}
+		}
 		return false;
 	}
 

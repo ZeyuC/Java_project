@@ -116,11 +116,13 @@ public class Message implements Serializable, Comparable<Message>
 		 * 	otherwise use empty String
 		 * 	- initialize this.author with author (which can ben null)
 		 */
+		
 		// date should never be null
-		this.date = null;
-		// content should never be null
-		this.content = null;
-		this.author = null;
+  		this.date = date != null ? date:new Date();
+  		// content should never be null
+ 		this.content = content != null ? content:"";
+ 	    this.author = author;
+
 	}
 
 	/**

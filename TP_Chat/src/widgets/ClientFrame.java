@@ -109,12 +109,12 @@ public class ClientFrame extends AbstractClientFrame
 	{
 		super(name, host, commonRun, parentLogger);
 		thisRef = this;
-
+		
 		// -------------------------------------------------------------
 		// IO streams
 		//--------------------------------------------------------------
 		/*
-		 * Caution: input stream creation should (eventualluu) be delayed
+		 * Caution: input stream creation should (eventually) be delayed
 		 * until #run since the #inPipe can't be connected to a
 		 * PipedOutputStream yet
 		 */
@@ -127,7 +127,7 @@ public class ClientFrame extends AbstractClientFrame
 		quitAction = new QuitAction();
 
 		/*
-		 * Adds a listener to the window so teh application can quit when the
+		 * Adds a listener to the window so the application can quit when the
 		 * window is closed
 		 */
 		addWindowListener(new FrameWindowListener());
@@ -148,7 +148,6 @@ public class ClientFrame extends AbstractClientFrame
 
 		Component toolBarSep = Box.createHorizontalGlue();
 		toolBar.add(toolBarSep);
-
 		serverLabel = new JLabel(host == null ? "" : host);
 		toolBar.add(serverLabel);
 
@@ -168,7 +167,7 @@ public class ClientFrame extends AbstractClientFrame
 
 		JTextPane textPane = new JTextPane();
 		textPane.setEditable(false);
-		// autoscroll textPane to bottom
+		// auto scroll textPane to bottom
 		DefaultCaret caret = (DefaultCaret) textPane.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
@@ -451,7 +450,6 @@ public class ClientFrame extends AbstractClientFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			logger.info("QuitAction: sending bye ... ");
-
 			serverLabel.setText("");
 			thisRef.validate();
 

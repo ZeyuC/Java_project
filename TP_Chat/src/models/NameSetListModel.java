@@ -65,6 +65,16 @@ public class NameSetListModel extends AbstractListModel<String>
 	 */
 	public boolean add(String value)
 	{
+		if (value != null && value != "" && !nameSet.contains(value)) {
+			synchronized(nameSet) {
+				boolean added = nameSet.add(value);
+				if (added) {
+					fireContentsChanged(this, 0, nameSet.size()-1);
+					return true;
+				}
+				return false;
+			}
+		}
 		/*
 		 * TODO Add a new name to nameSet (iff non null and non empty)
 		 * Caution :
@@ -83,13 +93,15 @@ public class NameSetListModel extends AbstractListModel<String>
 	 */
 	public boolean contains(String value)
 	{
+		synchronized(nameSet) {
+			return nameSet.contains(value);
+		}
 		/*
 		 * TODO return true if value is part of nameSet
 		 * Caution :
 		 * 	- nameSet should be accessed in a synchronized(namSet){...}
 		 * 	block
 		 */
-		return false;
 	}
 
 	/**
@@ -104,6 +116,17 @@ public class NameSetListModel extends AbstractListModel<String>
 	 */
 	public boolean remove(int index)
 	{
+		if (index < nameSet.size() && index >= 0) {
+			synchronized(nameSet) {
+				Object[] l = nameSet.toArray();
+				boolean removed = nameSet.remove(l[index]);
+				if (removed) {
+					fireContentsChanged(this, 0, nameSet.size()-1);
+					return true;
+				}
+				return false;
+			}
+		}
 		/*
 		 * TODO Remove the element at index "index" of nameSet
 		 * Caution :
@@ -123,6 +146,12 @@ public class NameSetListModel extends AbstractListModel<String>
 	 */
 	public void clear()
 	{
+		synchronized(nameSet) {
+			nameSet.clear();
+			if (nameSet.size() == 0) {
+				fireContentsChanged(this, 0, nameSet.size()-1);
+			}
+		}
 		/*
 		 * TODO clear nameSet
 		 * Caution :
@@ -141,8 +170,8 @@ public class NameSetListModel extends AbstractListModel<String>
 	@Override
 	public int getSize()
 	{
+		return nameSet.size();
 		// TODO Replace with implementation ...
-		return 0;
 	}
 
 	/**
@@ -155,6 +184,12 @@ public class NameSetListModel extends AbstractListModel<String>
 	@Override
 	public String getElementAt(int index)
 	{
+		if (index < nameSet.size() && index >= 0) {
+			synchronized(nameSet) {
+				Object[] l = nameSet.toArray();
+				return (String) l[index];
+			}
+		}
 		/*
 		 * Get nameSet at index "index"
 		 * Caution :

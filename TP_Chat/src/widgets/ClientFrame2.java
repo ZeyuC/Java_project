@@ -1,9 +1,16 @@
 package widgets;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -13,6 +20,8 @@ import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EventObject;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -21,21 +30,37 @@ import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
+import javax.swing.CellRendererPane;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import chat.Failure;
 import chat.Vocabulary;
@@ -43,6 +68,9 @@ import models.AuthorListFilter;
 import models.Message;
 import models.Message.MessageOrder;
 import models.NameSetListModel;
+import java.awt.ComponentOrientation;
+import javax.swing.JToggleButton;
+import javax.swing.Box;
 
 /**
  * Chat GUI v2.0 with
@@ -72,7 +100,8 @@ public class ClientFrame2 extends AbstractClientFrame
 	 * List of all received messages
 	 */
 	private List<Message> messages;
-
+	
+	private List<String> messages_user = new Vector<String>();
 	/**
 	 * Object input stream. Used to read {@link Message}s on the
 	 * {@link AbstractClientFrame#inPipe} and display these messages in the
@@ -119,6 +148,8 @@ public class ClientFrame2 extends AbstractClientFrame
 	 */
 	protected final AbstractClientFrame frameRef;
 
+	private int index = 0;
+	
 	/**
 	 * Action to quit application
 	 */
@@ -152,7 +183,7 @@ public class ClientFrame2 extends AbstractClientFrame
 	 * {@link #userListSelectionModel} selected users
 	 */
 	private final Action kickAction = new KickUserAction();
-
+	
 	/**
 	 * Action to sort all messages by date
 	 */
@@ -167,7 +198,31 @@ public class ClientFrame2 extends AbstractClientFrame
 	 * Action to sort all messages by content
 	 */
 	private final Action sortByContentAction = new SortAction(MessageOrder.CONTENT);
-
+	
+	/**
+	 * The underlying list model to be associated with a {@link JList}.
+	 * elements added or removed from this model will automatically be
+	 * reflected in the {@link JList} associated to this model.
+	 */
+	private JList<String> userList;
+	
+	/**
+	 *	the different modes of auto-complete
+	 */
+	private static enum Mode {
+	    INSERT,
+	    COMPLETION
+	  };
+	  
+	private static final String COMMIT_ACTION = "commit";
+	
+	/**
+	 * the list of keywords that trigger the Auto-complete action
+     */
+	private ArrayList<String> keywords = new ArrayList<String>(1000);
+	  
+	private Autocomplete autoComplete = new Autocomplete(sendField, keywords);
+	
 	/**
 	 * Window constructor
 	 * @param name user's name
@@ -192,7 +247,6 @@ public class ClientFrame2 extends AbstractClientFrame
 		clientName = name;
 		userListModel = new NameSetListModel();
 		userListModel.add(clientName);
-
 		messages = new Vector<Message>();
 
 		inOIS = null;
@@ -202,6 +256,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		// -------------------------------------------------------------
 		// Window builder part
 		// -------------------------------------------------------------
+		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
@@ -246,7 +301,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		JMenuItem mntmClearSelection = new JMenuItem("Clear Selection");
 		mntmClearSelection.setAction(clearSelectionAction);
 		mnUsers.add(mntmClearSelection);
-
+		
 		JMenuItem mntmKickSelected = new JMenuItem("Kick Selected");
 		mntmKickSelected.setAction(kickAction);
 		mnUsers.add(mntmKickSelected);
@@ -259,31 +314,94 @@ public class ClientFrame2 extends AbstractClientFrame
 		 * quit when window is closed
 		 */
 		addWindowListener(new FrameWindowListener());
+		
+		
+		JPanel sendPanel = new JPanel();
+		getContentPane().add(sendPanel, BorderLayout.SOUTH);
+		sendPanel.setLayout(new BorderLayout(0, 0));
+		sendField = new JTextField();
+		sendField.setAction(sendAction);
+		keywords.add(name);
+		keywords.add("kick");
+		keywords.add("bye");
+		keywords.add("catchup");
+		sendField.setFocusTraversalKeysEnabled(false);
+		autoComplete = new Autocomplete(sendField, keywords);
+		sendField.getDocument().addDocumentListener(autoComplete);
+		// Maps the tab key to the commit action, which finishes the autocomplete
+		// when given a suggestion
+		sendField.getInputMap().put(KeyStroke.getKeyStroke("TAB"), COMMIT_ACTION);
+		sendField.getActionMap().put(COMMIT_ACTION, autoComplete.new CommitAction());
+		sendField.addKeyListener(new KeyAdapter()
+		{
+			public void keyPressed (KeyEvent e) {
+				int code = e.getKeyCode();
+			
+				if (code == 37)
+				{
+					sendField.setText("");
+				}
+				if (code == 38 )
+				{	
+					if(index>0 && index <= messages_user.size())
+					{
+						index--;
+						//System.out.println("up"+index +" "+messages_user.size());
+					sendField.setText(messages_user.get(index)); 
+					}
+				}
+				if (code == 40)
+				{
+					if(index>=0 && index < messages_user.size()-1)
+					{
+					index++;
+					//System.out.println("down"+index +" "+messages_user.size());
+					sendField.setText(messages_user.get(index)); 
+					}
+					else if(index == messages_user.size()-1) {
+						index++;
+						sendField.setText(""); 
+					}
+				}
+			}
+		});	
+		sendPanel.add(sendField);
+		sendField.setColumns(10);
 
-		/*
-		 * TODO autoscroll textPane to bottom
-		 * 	- Get caret from textPane
-		 * 	- An set its update policy to ALWAYS_UPDATE
-		 */
-		DefaultCaret caret = null; // <-- TODO replace null
-		// caret.set...
+		JButton sendButton = new JButton(sendAction);
+		sendButton.setAction(sendAction);
+		sendButton.setHideActionText(true);
+		sendPanel.add(sendButton, BorderLayout.EAST);
+		
 
+		JScrollPane scrollPane = new JScrollPane();
+		getContentPane().add(scrollPane, BorderLayout.CENTER);
+		JTextPane textPane = new JTextPane();
+		textPane.setEditable(false);
+		DefaultCaret caret = (DefaultCaret) textPane.getCaret(); // <-- TODO replace null
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+		scrollPane.setViewportView(textPane);
 		/*
 		 * TODO Setup document and documentStylee
 		 * 	- Get Styled Document from textPane
 		 * 	- Adds a new style to the document and stor it into documentStyle
 		 * 	- Get foreground color from StyleConstants into defaultColor
 		 */
-		document = null; // <-- TODO replace null
-		documentStyle = null; // <-- TODO replace null
-		defaultColor = null; // <-- TODO replace null
+		document = textPane.getStyledDocument();
+		documentStyle = textPane.addStyle("New Style", null);
+		defaultColor = StyleConstants.getForeground(documentStyle);
 
 		/*
 		 * TODO register all widgets associated to the filterAction
 		 */
-		filterAction.registerButton(null); // <-- TODO replace null
-
-
+		filterAction.registerButton(sendButton);
+		filterAction.registerButton(mntmClear);
+		filterAction.registerButton(chckbxmntmSortByAuthor);
+		filterAction.registerButton(chckbxmntmSortByDate);	
+		filterAction.registerButton(chckbxmntmFilter);
+		filterAction.registerButton(chckbxmntmSortByContent);
+		filterAction.registerButton(mntmClearSelection);
+		filterAction.registerButton(mntmKickSelected);
 		/*
 		 * TODO Setup List models
 		 * 	- Add a new Cell Renderer to your list (a ColorTextRenderer)
@@ -292,16 +410,79 @@ public class ClientFrame2 extends AbstractClientFrame
 		 * 	- Add a new List Selection Listener
 		 * 	(a UserListSelectionListener) to the userListSelectionModel
 		 */
-		userListSelectionModel = null; // <-- TODO replace null
-		// userListSelectionModel.add...
-		// userList.set...
-		// userList.set...
-
+		
+		
+				ColorTextRenderer colorTextRenderer = new ColorTextRenderer();
+		
+				JScrollPane listScrollPane = new JScrollPane();
+				listScrollPane.setPreferredSize(new Dimension(100, 4));
+				getContentPane().add(listScrollPane, BorderLayout.WEST);
+				userList = new JList<String>(userListModel);
+				listScrollPane.setViewportView(userList);
+				userList.setName("Elements");
+				userList.setBorder(UIManager.getBorder("EditorPane.border"));
+				JPopupMenu popupMenu = new JPopupMenu();
+				addPopup(userList, popupMenu);
+				
+				JMenuItem pptmClearSelection = new JMenuItem("Clear Selection");
+				pptmClearSelection.setAction(clearSelectionAction);
+				popupMenu.add(pptmClearSelection);
+				
+						JMenuItem pptmKickSelected = new JMenuItem("Kick Selected");
+						pptmKickSelected.setAction(kickAction);
+						popupMenu.add(pptmKickSelected);
+						userList.setCellRenderer(colorTextRenderer);
+						
+						JToolBar toolBar = new JToolBar();
+						getContentPane().add(toolBar, BorderLayout.NORTH);
+						
+						JButton btnQuit = new JButton("quit");
+						btnQuit.setHideActionText(true);
+						btnQuit.setAction(quitAction);
+						toolBar.add(btnQuit);
+						
+						Component horizontalStrut = Box.createHorizontalStrut(20);
+						toolBar.add(horizontalStrut);
+						
+						JButton btnClear = new JButton("Clear");
+						btnClear.setHideActionText(true);
+						btnClear.setAction(clearMessagesAction);
+						btnClear.setActionCommand("Clear Messages");
+						toolBar.add(btnClear);
+						
+						JToggleButton tglbtnFilter = new JToggleButton("FIlter");
+						tglbtnFilter.setHideActionText(true);
+						tglbtnFilter.setAction(filterAction);
+						toolBar.add(tglbtnFilter);
+						
+						JButton btnNewButton = new JButton("New button");
+						btnNewButton.setHideActionText(true);
+						btnNewButton.setAction(clearSelectionAction);
+						btnNewButton.setActionCommand("Clear selection");
+						toolBar.add(btnNewButton);
+						
+						JButton btnKick = new JButton("kick");
+						btnKick.setHideActionText(true);
+						btnKick.setAction(kickAction);
+						toolBar.add(btnKick);
+						
+						Component horizontalGlue = Box.createHorizontalGlue();
+						toolBar.add(horizontalGlue);
+						
+						serverLabel = new JLabel(host == null ? "" : host);
+						toolBar.add(serverLabel);
+						
+						
+		userListSelectionModel = userList.getSelectionModel(); // <-- TODO replace null
+		UserListSelectionListener listener = new UserListSelectionListener();
+		userListSelectionModel.addListSelectionListener(listener);
+		
+		
 		/*
 		 * TODO Create a new AuthorListFilter with userListModel and
 		 * userListSelectionModel
 		 */
-		authorFilter = null; // <-- TODO replace null
+		authorFilter = new AuthorListFilter(userListModel, userListSelectionModel); // <-- TODO replace null
 	}
 
 	/**
@@ -363,7 +544,12 @@ public class ClientFrame2 extends AbstractClientFrame
 			if ((author != null) && (author.length() > 0))
 			{
 				userListModel.add(author);
+				if (!keywords.contains(author)) {
+					keywords.add(author);
+					autoComplete = new Autocomplete(sendField, keywords);
+				}
 			}
+			
 
 			// DONE update messages
 			updateMessages();
@@ -418,14 +604,31 @@ public class ClientFrame2 extends AbstractClientFrame
 	 */
 	protected void appendMessage(Message message)// throws BadLocationException
 	{
+		/*
+		 * adds "[yyyy/MM/dd HH:mm:ss] user > message" at the end of the document
+		 */
+		StringBuffer sb = new StringBuffer();
+
+		sb.append(message);
+		sb.append(Vocabulary.newLine);
+
+		// parse TEXT message for name
+		String source = parseName(message.toString());
+		if ((source != null) && (source.length() > 0))
+		{
+			/*
+			 * Set color for user in document style
+			 */
+			StyleConstants.setForeground(documentStyle,
+			                             getColorFromName(source));
+		}
 		try
 		{
 			/*
 			 * TODO Adds message date to the end of the document with default
 			 * style
 			 */
-			document.insertString(0, "dummy", documentStyle); // <-- TODO replace
-
+			document.insertString(document.getLength(),message.getDate().toString(), documentStyle); // <-- TODO replace
 			/*
 			 * TODO If message has no author (server's message) adds the
 			 * message content with default style,
@@ -436,11 +639,52 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * then re-set the default style in document Style
 			 */
 			// TODO ...
+			if(message.getAuthor() == null)
+			{
+				document.insertString(document.getLength(), message.getContent(), documentStyle);		
+			}
+			else {
+				Color color = getColorFromName(message.getAuthor());
+				StyleConstants.setForeground(documentStyle,color);
+				document.insertString(document.getLength(),
+	                      sb.toString(),
+	                      documentStyle);
+				StyleConstants.setForeground(documentStyle,defaultColor);
+			}
 		}
 		catch (BadLocationException ble)
 		{
 			logger.warning("ClientFrame2::appendMessage(...); Bad Location : "
 			    + ble.getLocalizedMessage());
+		}
+	}
+	
+	/**
+	 * Search for user's name in a string formatted as "user > message".
+	 * This method is used to extract user's name from text messages
+	 * @param message the message to parse
+	 * @return user's name or null if there is no user's name (server's
+	 * messages)
+	 */
+	protected String parseName(String message)
+	{
+		if (message.contains(">") && message.contains("]"))
+		{
+			int pos1 = message.indexOf(']');
+			int pos2 = message.indexOf('>');
+			try
+			{
+				return new String(message.substring(pos1 + 2, pos2 - 1));
+			}
+			catch (IndexOutOfBoundsException iobe)
+			{
+				logger.warning("ClientFrame::parseName: index out of bounds");
+				return null;
+			}
+		}
+		else
+		{
+			return null;
 		}
 	}
 
@@ -456,6 +700,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		try
 		{
 			// Clears document
+			document.remove(0, document.getLength());
 			document.insertString(0, "clear", documentStyle); // <-- TODO replace
 		}
 		catch (BadLocationException ex)
@@ -467,7 +712,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		/*
 		 * TODO Then creates a stream from messages
 		 */
-		Stream<Message> stream = null; // <-- TODO replace
+		Stream<Message> stream = messages.stream(); // <-- TODO replace
 
 		/*
 		 * TODO If Message has any orders then sort the stream
@@ -475,7 +720,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		if (Message.orderSize() > 0)
 		{
 			// If there is an ordering set into Message sort the stream
-			stream = null; // <-- TODO replace
+			stream = stream.sorted(); // <-- TODO replace
 		}
 
 		/*
@@ -484,7 +729,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		if (filtering)
 		{
 			// filter sorted stream according to #authorFilter
-			stream = null; // <-- TODO replace
+			stream = stream.filter(authorFilter); // <-- TODO replace
 		}
 
 		/*
@@ -532,9 +777,9 @@ public class ClientFrame2 extends AbstractClientFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			logger.info("QuitAction: sending bye ... ");
-
 			// TODO Complete ...
-
+			//serverLabel.setText("");
+			frameRef.validate();
 			try
 			{
 				Thread.sleep(1000); // don't ask why
@@ -543,6 +788,7 @@ public class ClientFrame2 extends AbstractClientFrame
 			{
 				return;
 			}
+			sendMessage(Vocabulary.byeCmd);
 		}
 	}
 
@@ -586,16 +832,25 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * Clears document content
 			 */
 			// TODO Complete ...
-
+			try
+			{
+				document.remove(0, document.getLength());
+			}
+			catch (BadLocationException ex)
+			{
+				logger.warning("ClientFrame: clear doc: bad location");
+				logger.warning(ex.getLocalizedMessage());
+			}
 			/*
 			 * Clears user's list
 			 */
 			// TODO Complete ...
-
+			userListModel.clear();
 			/*
 			 * Clears recorded messages
 			 */
 			// TODO Complete ...
+			messages.clear();
 		}
 	}
 
@@ -624,7 +879,7 @@ public class ClientFrame2 extends AbstractClientFrame
 		}
 
 		/**
-		 * Action performing: retreive {@link ClientFrame2#sendTextField}
+		 * Action performing: retrieve {@link ClientFrame2#sendTextField}
 		 * content
 		 * if non empty and send it to server
 		 * @param e the event that triggered this action [not used]
@@ -632,14 +887,27 @@ public class ClientFrame2 extends AbstractClientFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			String content = null; // <-- TODO replace null
-
+			String content = sendField.getText(); // <-- TODO replace null
 			/*
 			 * TODO Send sendField content to the server with sendMessage
 			 * then clears sendField content
 			 */
-
-			logger.info("Sent message = " + content);
+			if (content != "") {
+				if (content.length() > 0)
+				{
+					if (content == "catchup") {			
+						sendMessage(Vocabulary.catchUpCmd);
+						sendField.setText("");
+					}
+					else {
+						messages_user.add(content);
+						index = messages_user.size();
+						sendMessage(content);
+						sendField.setText("");
+					}
+				
+				}
+			}
 		}
 	}
 
@@ -743,20 +1011,24 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * TODO Get source, then source state to see if it is selected
 			 * to set new filtering status
 			 */
-			AbstractButton button = null; // <-- TODO replace ...
-
-			boolean newFiltering = false;  // <-- TODO replace ...
+			AbstractButton button = (AbstractButton) e.getSource(); // <-- TODO replace ...
+			boolean newFiltering = button.isSelected() ;  // <-- TODO replace ...
 			logger.info("Filtering is " + (newFiltering ? "On" : "Off"));
-
+			
 			/*
 			 * TODO Set Filtering on authorFilter and if update messages
 			 * iff needed
 			 */
+			authorFilter.setFiltering(newFiltering);
+			updateMessages();
 
 			/*
 			 * TODO Update all buttons associated to this action with
 			 * new filtering status
 			 */
+			for(AbstractButton b:buttons) {
+				b.setSelected(newFiltering);
+			}
 		}
 	}
 
@@ -801,6 +1073,9 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * authorFilter and evt update messages
 			 */
 			// TODO ...
+			userListSelectionModel.clearSelection();
+			authorFilter.clear();
+			updateMessages();
 		}
 	}
 
@@ -846,13 +1121,18 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * e.g. : "kick MyNemesis"
 			 * N.B. Kick is part of Vocabulary : Vocabulary.kickCmd
 			 */
-			int minIndex = 0; // <-- TODO replace ...
-			int maxIndex = 0; // <-- TODO replace ...
-
+			int minIndex = userListSelectionModel.getMinSelectionIndex(); // <-- TODO replace ...
+			int maxIndex = userListSelectionModel.getMaxSelectionIndex(); // <-- TODO replace ...
 			// TODO ...
+			int i;
+			for (i=minIndex; i<=maxIndex;i++) {
+				String userKicked =  userListModel.getElementAt(i);
+				sendMessage(Vocabulary.kickCmd + " " + userKicked);
+			}
+			sendField.setText("");
 		}
 	}
-
+	
 	/**
 	 * Action to sort messages according to specific ordering set into
 	 * {@link Message}
@@ -930,10 +1210,17 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * corresponding order from Message with removeOrder
 			 * And finally update messages
 			 */
-			AbstractButton button = null; // <-- TODO replace ...
-			boolean selected = false;  // <-- TODO replace ...
+			AbstractButton button = (AbstractButton) e.getSource(); // <-- TODO replace ...
+			boolean selected = button.isSelected();  // <-- TODO replace ...
 
 			// TODO ...
+			if (selected) {
+				Message.addOrder(order);
+			}
+			else {
+				Message.removeOrder(order);
+			}
+			updateMessages();
 		}
 	}
 
@@ -966,11 +1253,18 @@ public class ClientFrame2 extends AbstractClientFrame
 			 * kickAction and clearSelectionAction should be disabled
 			 * and enabled otherwise
 			 */
-			int firstIndex = 0; // <-- TODO replace ...
-			int lastIndex = 0; // <-- TODO replace ...
-			boolean isAdjusting = false;  // <-- TODO replace ...
-			ListSelectionModel lsm = null; // <-- TODO replace ...
-
+			int firstIndex = e.getFirstIndex(); // <-- TODO replace ...
+			int lastIndex = e.getLastIndex(); // <-- TODO replace ...
+			boolean isAdjusting = e.getValueIsAdjusting();  // <-- TODO replace ...
+			ListSelectionModel lsm = (ListSelectionModel) e.getSource(); // <-- TODO replace ...
+			if (lsm.isSelectionEmpty()) {
+				kickAction.setEnabled(false);
+				clearSelectionAction.setEnabled(false);
+			}
+			else {
+				kickAction.setEnabled(true);
+				clearSelectionAction.setEnabled(true);
+			}
 			/*
 			 * isAdjusting remains true while events like drag n drop are
 			 * still processed and becomes false afterwards.
@@ -978,6 +1272,16 @@ public class ClientFrame2 extends AbstractClientFrame
 			if (!isAdjusting)
 			{
 				// TODO ...
+				authorFilter.clear();
+				int i;
+				for (i=firstIndex; i<=lastIndex; i++) {
+					if (lsm.isSelectedIndex(i)) {
+						authorFilter.add(userListModel.getElementAt(i));
+					}
+				}
+			}
+			if (filtering) {
+				updateMessages();
 			}
 		}
 	}
@@ -1036,6 +1340,111 @@ public class ClientFrame2 extends AbstractClientFrame
 			return this;
 		}
 	}
+	
+	public class Autocomplete implements DocumentListener {
+
+
+		  private JTextField textField;
+		  private ArrayList<String> keywords;
+		  private Mode mode = Mode.INSERT;
+
+		  public Autocomplete(JTextField textField, ArrayList<String> keywords) {
+			this.textField = textField;
+		    this.keywords = keywords;
+		    //this.keywords = keywords;
+		    Collections.sort(keywords);
+		  }
+
+		  @Override
+		  public void changedUpdate(DocumentEvent ev) { }
+
+		  @Override
+		  public void removeUpdate(DocumentEvent ev) { }
+
+		  @Override
+		  public void insertUpdate(DocumentEvent ev) {
+		    if (ev.getLength() != 1)
+		      return;
+
+		    int pos = ev.getOffset();
+		    String content = null;
+		    try {
+		      content = textField.getText(0, pos + 1);
+		    } catch (BadLocationException e) {
+		      e.printStackTrace();
+		    }
+
+		    // Find where the word starts
+		    int w;
+		    for (w = pos; w >= 0; w--) {
+		      if (!Character.isLetter(content.charAt(w))) {
+		        break;
+		      }
+		    }
+
+		    // Too few chars
+		    if (pos - w < 2)
+		      return;
+
+		    String prefix = content.substring(w + 1).toLowerCase();
+		    int n = Collections.binarySearch(keywords, prefix);
+		    if (n < 0 && -n <= keywords.size()) {
+		      String match = keywords.get(-n - 1);
+		      if (match.startsWith(prefix)) {
+		        // A completion is found
+		        String completion = match.substring(pos - w);
+		        // We cannot modify Document from within notification,
+		        // so we submit a task that does the change later
+		        SwingUtilities.invokeLater(new CompletionTask(completion, pos + 1));
+		      }
+		    } else {
+		      // Nothing found
+		      mode = Mode.INSERT;
+		    }
+		  }
+
+		  public class CommitAction extends AbstractAction {
+		    /**
+		     * 
+		     */
+		    private static final long serialVersionUID = 5794543109646743416L;
+
+		    @Override
+		    public void actionPerformed(ActionEvent ev) {
+		      if (mode == Mode.COMPLETION) {
+		        int pos = textField.getSelectionEnd();
+		        StringBuffer sb = new StringBuffer(textField.getText());
+		        textField.setText(sb.toString());
+		        textField.setCaretPosition(pos);
+		        mode = Mode.INSERT;
+		      } else {
+		        textField.replaceSelection("\t");
+		      }
+		    }
+		  }
+
+		  private class CompletionTask implements Runnable {
+		    private String completion;
+		    private int position;
+
+		    CompletionTask(String completion, int position) {
+		      this.completion = completion;
+		      this.position = position;
+		    }
+
+		    public void run() {
+		      StringBuffer sb = new StringBuffer(textField.getText());
+		      sb.insert(position, completion);
+		      textField.setText(sb.toString());
+		      textField.setCaretPosition(position + completion.length());
+		      textField.moveCaretPosition(position);
+		      mode = Mode.COMPLETION;
+		    }
+		  }
+
+		}
+	
+	
 
 	/**
 	 * Class redirecting the window closing event to the {@link QuitAction}
@@ -1059,4 +1468,39 @@ public class ClientFrame2 extends AbstractClientFrame
 			}
 		}
 	}
+	/**
+	 * Adds a popup menu to a component
+	 * @param component the parent component of the popup menu
+	 * @param popup the popup menu to add
+	 */
+	private static void addPopup(Component component, final JPopupMenu popup)
+	{
+		component.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				if (e.isPopupTrigger())
+				{
+					showMenu(e);
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				if (e.isPopupTrigger())
+				{
+					showMenu(e);
+				}
+			}
+
+			private void showMenu(MouseEvent e)
+			{
+				popup.show(e.getComponent(), e.getX(), e.getY());
+			}
+		});
+	}
+
 }
+

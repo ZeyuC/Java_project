@@ -1,12 +1,88 @@
-May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+May 17, 2018 3:53:30 PM logger.LoggerFactory getLogger
 信息: log file created
-May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+May 17, 2018 3:53:30 PM logger.LoggerFactory getLogger
 信息: Logger ready
-May 04, 2018 3:39:09 PM RunChatServer launch
+May 17, 2018 3:53:30 PM RunChatServer launch
 信息: Creating server on port 1394 with timeout 5000 ms and verbose off
-May 04, 2018 3:39:09 PM logger.LoggerFactory getLogger
+May 17, 2018 3:53:30 PM logger.LoggerFactory getLogger
 信息: Logger ready
-May 04, 2018 3:39:09 PM chat.server.ChatServer <init>
+May 17, 2018 3:53:30 PM chat.server.ChatServer <init>
 信息: ChatServer::ChatServer(port = 1394, timeout = 5000, quit = true)
-May 04, 2018 3:39:09 PM RunChatServer launch
+May 17, 2018 3:53:30 PM RunChatServer launch
 信息: Waiting for server to terminate ... 
+May 17, 2018 3:53:33 PM chat.server.ChatServer run
+信息: ChatServer: Creatingc client input stream to get client's name ... 
+May 17, 2018 3:53:33 PM chat.server.ChatServer run
+信息: ChatServer: reading client's name: 
+May 17, 2018 3:53:33 PM chat.server.ChatServer run
+信息: ChatServer: client name chenzeyu
+May 17, 2018 3:53:33 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:53:33 PM chat.server.InputClient <init>
+信息: InputClient: Creating Input Stream ... 
+May 17, 2018 3:53:33 PM chat.server.InputOutputClient <init>
+信息: Client: Creating Output Stream ... 
+May 17, 2018 3:53:33 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:53:36 PM chat.server.ChatServer run
+信息: ChatServer: Creatingc client input stream to get client's name ... 
+May 17, 2018 3:53:36 PM chat.server.ChatServer run
+信息: ChatServer: reading client's name: 
+May 17, 2018 3:53:36 PM chat.server.ChatServer run
+信息: ChatServer: client name s
+May 17, 2018 3:53:36 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:53:36 PM chat.server.InputClient <init>
+信息: InputClient: Creating Input Stream ... 
+May 17, 2018 3:53:36 PM chat.server.InputOutputClient <init>
+信息: Client: Creating Output Stream ... 
+May 17, 2018 3:53:36 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:53:59 PM chat.server.ChatServer run
+信息: ChatServer: Creatingc client input stream to get client's name ... 
+May 17, 2018 3:53:59 PM chat.server.ChatServer run
+信息: ChatServer: reading client's name: 
+May 17, 2018 3:53:59 PM chat.server.ChatServer run
+信息: ChatServer: client name s
+May 17, 2018 3:54:02 PM chat.server.ChatServer run
+信息: ChatServer: Creatingc client input stream to get client's name ... 
+May 17, 2018 3:54:02 PM chat.server.ChatServer run
+信息: ChatServer: reading client's name: 
+May 17, 2018 3:54:02 PM chat.server.ChatServer run
+信息: ChatServer: client name a
+May 17, 2018 3:54:02 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:54:02 PM chat.server.InputClient <init>
+信息: InputClient: Creating Input Stream ... 
+May 17, 2018 3:54:02 PM chat.server.InputOutputClient <init>
+信息: Client: Creating Output Stream ... 
+May 17, 2018 3:54:02 PM logger.LoggerFactory getLogger
+信息: Logger ready
+May 17, 2018 3:54:27 PM chat.server.InputOutputClient cleanup
+信息: Client::cleanup: closing output stream ... 
+May 17, 2018 3:54:27 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing input stream ... 
+May 17, 2018 3:54:27 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing client socket ... 
+May 17, 2018 3:54:27 PM chat.server.ChatServer cleanup
+信息: ChatServer::run: still 2 threads remaining ...
+May 17, 2018 3:54:27 PM chat.server.InputOutputClient cleanup
+信息: Client::cleanup: closing output stream ... 
+May 17, 2018 3:54:27 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing input stream ... 
+May 17, 2018 3:54:27 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing client socket ... 
+May 17, 2018 3:54:27 PM chat.server.ChatServer cleanup
+信息: ChatServer::run: still 1 threads remaining ...
+May 17, 2018 3:54:28 PM chat.server.InputOutputClient cleanup
+信息: Client::cleanup: closing output stream ... 
+May 17, 2018 3:54:28 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing input stream ... 
+May 17, 2018 3:54:28 PM chat.server.InputClient cleanup
+信息: MainClient::cleanup: closing client socket ... 
+May 17, 2018 3:54:28 PM chat.server.ChatServer cleanup
+信息: ChatServer::run: no more threads.
+May 17, 2018 3:54:32 PM chat.server.ChatServer run
+信息: ChatServer::run: all client handlers terminated
+May 17, 2018 3:54:32 PM chat.server.ChatServer run
+信息: ChatServer::run: Closing server socket ... 

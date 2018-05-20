@@ -400,9 +400,7 @@ public class RunChatClient extends AbstractRunChat
 	 */
 	public static void main(String[] args)
 	{
-
 		RunChatClient client = new RunChatClient(args);
-
 		client.launch();
 	}
 }
